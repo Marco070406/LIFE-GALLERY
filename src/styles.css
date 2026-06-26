@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply font-sans antialiased;
+  background: #fff;
+  color: #111;
+}
+
+/* ── Thèmes ─────────────────────────────────────────────────────────────── */
+.section-light {
+  background: #fff;
+  color: #111;
+}
+
+.section-dark {
+  background: #0a0a0a;
+  color: #e8e8e8;
+}
+
+/* ── Typographie ─────────────────────────────────────────────────────────── */
+/* Contraste amélioré : on évite les opacités trop faibles */
+.text-muted-light { color: #555; }
+.text-muted-dark  { color: #aaa; }
+
+/* ── Formes ─────────────────────────────────────────────────────────────── */
+.rounded-chapter {
+  border-radius: 20px;
+}
+
+/* ── Bouton chapitre ─────────────────────────────────────────────────────── */
+.btn-chapter {
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.35s ease, color 0.35s ease, transform 0.2s ease, box-shadow 0.35s ease;
+}
+
+.btn-chapter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.35);
+}
+
+.btn-chapter:active {
+  transform: scale(0.97);
+}
+
+/* Sur fond clair : hover = fond noir, texte blanc */
+.section-light .btn-chapter:hover {
+  background-color: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+/* Sur fond sombre : hover = fond blanc, texte noir */
+.section-dark .btn-chapter:hover {
+  background-color: #fff;
+  color: #111;
+  border-color: #fff;
+}
+
+/* ── Images ─────────────────────────────────────────────────────────────── */
+img {
+  display: block;
+}
+
+/* ── Scrollbar cachée (timeline mobile) ─────────────────────────────────── */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Tooltip fade-in ─────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-50%) translateX(4px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out forwards;
+}
+
+/* ── Scroll hint ─────────────────────────────────────────────────────────── */
+@keyframes scroll-arrow-drop {
+  0%        { opacity: 0;   transform: translateY(-6px); }
+  40%, 60%  { opacity: 1;   transform: translateY(0);    }
+  100%      { opacity: 0;   transform: translateY(6px);  }
+}
+
+@keyframes letter-wave {
+  0%, 100% { opacity: 0.3; transform: translateY(0);    color: #71717a; }
+  50%       { opacity: 1;   transform: translateY(-4px); color: #d4d4d8; }
+}
+
+.scroll-letter {
+  display: inline-block;
+  animation: letter-wave 2s ease-in-out infinite;
+}
+
+.scroll-arrow {
+  animation: scroll-arrow-drop 2.4s ease-in-out infinite;
+}
+.scroll-arrow-1 { animation-delay: 0s;   }
+.scroll-arrow-2 { animation-delay: 0.2s; }
+.scroll-arrow-3 { animation-delay: 0.4s; }
+
+/* ── Focus visible global ────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ── Réduction de mouvement ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
