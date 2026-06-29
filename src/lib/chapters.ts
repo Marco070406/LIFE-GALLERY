@@ -26,10 +26,10 @@ export const chapters: Chapter[] = [
     cover: '/images/Mika baby 1.jpeg',
     theme: 'light',
     gallery: [
-      { src: '/images/baby-2.jpg', caption: 'Premiers éclats de rire à la lumière du matin' },
-      { src: '/images/baby-3.jpg', caption: 'Mains qui se cherchent, un univers à découvrir' },
-      { src: '/images/baby-4.jpg', caption: 'Sommeil paisible, rêves d\'étoiles' },
-      { src: '/images/baby-5.jpg', caption: 'Éclat de lumière sur une peau encore transparente' },
+      { src: '/images/Mika baby 1.jpeg', caption: 'Premiers éclats de rire à la lumière du matin' },
+      { src: '/images/Mika baby 1.jpeg', caption: 'Mains qui se cherchent, un univers à découvrir' },
+      { src: '/images/Mika baby 1.jpeg', caption: 'Sommeil paisible, rêves d\'étoiles' },
+      { src: '/images/Mika baby 1.jpeg', caption: 'Éclat de lumière sur une peau encore transparente' },
     ],
   },
   {
@@ -42,10 +42,10 @@ export const chapters: Chapter[] = [
     cover: '/images/Mika enfance 1.jpeg',
     theme: 'dark',
     gallery: [
-      { src: '/images/child-2.jpg', caption: 'Saut vers l\'avenir, les pieds nus dans l\'herbe' },
-      { src: '/images/child-3.jpg', caption: 'Dessins et rêveries dans une chambre au soleil' },
-      { src: '/images/child-4.jpg', caption: 'Cours d\'eau et rêves d\'été' },
-      { src: '/images/child-5.jpg', caption: 'Fleurs ramassées, trésors de la fin d\'après-midi' },
+      { src: '/images/Mika enfance 1.jpeg', caption: 'Saut vers l\'avenir, les pieds nus dans l\'herbe' },
+      { src: '/images/Mika enfance 1.jpeg', caption: 'Dessins et rêveries dans une chambre au soleil' },
+      { src: '/images/Mika enfance 1.jpeg', caption: 'Cours d\'eau et rêves d\'été' },
+      { src: '/images/Mika enfance 1.jpeg', caption: 'Fleurs ramassées, trésors de la fin d\'après-midi' },
     ],
   },
   {
@@ -58,10 +58,10 @@ export const chapters: Chapter[] = [
     cover: '/images/life-teen.svg',
     theme: 'light',
     gallery: [
-      { src: '/images/teen-2.jpg', caption: 'Regard vers l\'horizon, l\'infini comme promesse' },
-      { src: '/images/teen-3.jpg', caption: 'Notes volées dans une classe vide' },
-      { src: '/images/teen-4.jpg', caption: 'Soirées d\'été, musique et lumière' },
-      { src: '/images/teen-5.jpg', caption: 'Premiers pas dans la vie, les rêves intérieurs' },
+      { src: '/images/life-teen.svg', caption: 'Regard vers l\'horizon, l\'infini comme promesse' },
+      { src: '/images/life-teen.svg', caption: 'Notes volées dans une classe vide' },
+      { src: '/images/life-teen.svg', caption: 'Soirées d\'été, musique et lumière' },
+      { src: '/images/life-teen.svg', caption: 'Premiers pas dans la vie, les rêves intérieurs' },
     ],
   },
   {
@@ -74,10 +74,10 @@ export const chapters: Chapter[] = [
     cover: '/images/life-young-adult.svg',
     theme: 'dark',
     gallery: [
-      { src: '/images/young-2.jpg', caption: 'Villes endormies, rêveries au crépuscule' },
-      { src: '/images/young-3.jpg', caption: 'Pages volées dans une librairie' },
-      { src: '/images/young-4.jpg', caption: 'Conversations qui défont les certitudes' },
-      { src: '/images/young-5.jpg', caption: 'Marche vers l\'inconnu, valise et espoir' },
+      { src: '/images/life-young-adult.svg', caption: 'Villes endormies, rêveries au crépuscule' },
+      { src: '/images/life-young-adult.svg', caption: 'Pages volées dans une librairie' },
+      { src: '/images/life-young-adult.svg', caption: 'Conversations qui défont les certitudes' },
+      { src: '/images/life-young-adult.svg', caption: 'Marche vers l\'inconnu, valise et espoir' },
     ],
   },
   {
@@ -90,10 +90,10 @@ export const chapters: Chapter[] = [
     cover: '/images/life-adult.svg',
     theme: 'light',
     gallery: [
-      { src: '/images/adult-2.jpg', caption: 'Regards qui traversent les années' },
-      { src: '/images/adult-3.jpg', caption: 'Mains qui se sont croisées, histoire de vie' },
-      { src: '/images/adult-4.jpg', caption: 'Sourires qui ont traversé les saisons' },
-      { src: '/images/adult-5.jpg', caption: 'Lumière douce sur les chemins parcourus' },
+      { src: '/images/life-adult.svg', caption: 'Regards qui traversent les années' },
+      { src: '/images/life-adult.svg', caption: 'Mains qui se sont croisées, histoire de vie' },
+      { src: '/images/life-adult.svg', caption: 'Sourires qui ont traversé les saisons' },
+      { src: '/images/life-adult.svg', caption: 'Lumière douce sur les chemins parcourus' },
     ],
   },
 ];
