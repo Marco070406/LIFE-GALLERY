@@ -9,6 +9,8 @@ export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultStaleTime: 1000 * 60 * 5,
+  // Retour arrière : on retrouve la position de scroll de la page précédente
+  scrollRestoration: true,
 });
 
 declare module '@tanstack/react-router' {

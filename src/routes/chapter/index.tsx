@@ -1,5 +1,5 @@
-import { createRoute, Link, useParams } from '@tanstack/react-router';
-import { chapters } from '../../lib/chapters';
+import { createRoute, Link, notFound } from '@tanstack/react-router';
+import { chapters, type Chapter, type GalleryImage } from '../../lib/chapters';
 import { Route as rootRoute } from '../__root';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import gsap from 'gsap';
@@ -8,9 +8,12 @@ import { Helmet } from 'react-helmet-async';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+const SWIPE_THRESHOLD = 50;
+
 // ── Lightbox ────────────────────────────────────────────────────────────────
 interface LightboxProps {
-  images: { src: string; caption: string }[];
+  images: GalleryImage[];
   index: number;
   onClose: () => void;
   onPrev: () => void;
@@ -19,29 +22,68 @@ interface LightboxProps {
 
 function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
   const item = images[index];
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
-  // Keyboard navigation
+  // Focus initial + restauration du focus + verrouillage du scroll
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    closeBtnRef.current?.focus();
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+      previouslyFocused?.focus();
+    };
+  }, []);
+
+  // Navigation clavier + piège à focus
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev();
-      if (e.key === 'ArrowRight') onNext();
+      else if (e.key === 'ArrowLeft') onPrev();
+      else if (e.key === 'ArrowRight') onNext();
+      else if (e.key === 'Tab' && dialogRef.current) {
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled])');
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
     document.addEventListener('keydown', handler);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handler);
-      document.body.style.overflow = '';
-    };
+    return () => document.removeEventListener('keydown', handler);
   }, [onClose, onPrev, onNext]);
+
+  // Précharge les photos voisines
+  useEffect(() => {
+    [images[index - 1], images[index + 1]].forEach((img) => {
+      if (img) new Image().src = img.src;
+    });
+  }, [images, index]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (delta > SWIPE_THRESHOLD) onPrev();
+    else if (delta < -SWIPE_THRESHOLD) onNext();
+  };
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={`Photo ${index + 1} sur ${images.length} — ${item.caption}`}
       className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
       onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Contenu — stoppe la propagation pour ne pas fermer au clic sur l'image */}
       <div
@@ -49,27 +91,29 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Compteur */}
-        <p className="text-xs text-zinc-500 mb-4 tracking-widest">
+        <p className="text-xs text-zinc-400 mb-4 tracking-widest" aria-live="polite">
           {String(index + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')}
         </p>
 
         {/* Image */}
         <img
+          key={item.src + index}
           src={item.src}
           alt={item.caption}
-          className="max-h-[75vh] w-full object-contain rounded-2xl"
+          className="max-h-[70vh] w-full object-contain rounded-2xl animate-fade-in-simple"
           decoding="async"
         />
 
         {/* Caption */}
-        <p className="mt-5 text-sm text-zinc-400 font-light text-center max-w-lg">{item.caption}</p>
+        <p className="mt-5 text-sm text-zinc-300 font-light text-center max-w-lg">{item.caption}</p>
 
         {/* Navigation gauche / droite */}
         <div className="flex items-center gap-6 mt-6">
           <button
+            type="button"
             onClick={onPrev}
             disabled={index === 0}
-            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             aria-label="Photo précédente"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -77,9 +121,10 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
             </svg>
           </button>
           <button
+            type="button"
             onClick={onNext}
             disabled={index === images.length - 1}
-            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             aria-label="Photo suivante"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -91,8 +136,10 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
 
       {/* Fermer */}
       <button
+        ref={closeBtnRef}
+        type="button"
         onClick={onClose}
-        className="absolute top-6 right-6 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        className="absolute top-6 right-6 w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-all cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         aria-label="Fermer"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -104,29 +151,32 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
 }
 
 // ── Page chapitre ────────────────────────────────────────────────────────────
-function ChapterPage() {
-  const { id } = useParams({ from: '/chapter/$id' });
-  const chapter = chapters.find((c) => c.id === id);
-
+function ChapterPage({ chapter }: { chapter: Chapter }) {
   const galleryRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const heroImgRef = useRef<HTMLImageElement>(null);
   const progressFillRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hoveredDot, setHoveredDot] = useState<number | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const galleryLength = chapter.gallery.length;
+  const currentIndex = chapters.findIndex((c) => c.id === chapter.id);
+  const prevChapter = chapters[currentIndex - 1];
+  const nextChapter = chapters[currentIndex + 1];
+  const isDark = chapter.theme === 'dark';
+  const themeClass = isDark ? 'section-dark' : 'section-light';
 
   const openLightbox = useCallback((i: number) => setLightboxIndex(i), []);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
   const prevPhoto = useCallback(() =>
     setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i)), []);
   const nextPhoto = useCallback(() =>
-    setLightboxIndex((i) => (i !== null && chapter && i < chapter.gallery.length - 1 ? i + 1 : i)), [chapter]);
+    setLightboxIndex((i) => (i !== null && i < galleryLength - 1 ? i + 1 : i)), [galleryLength]);
 
   useEffect(() => {
-    if (!chapter) return;
+    const mm = gsap.matchMedia(containerRef);
 
-    const ctx = gsap.context(() => {
+    mm.add(`not ${REDUCED_MOTION}`, () => {
       // Hero image + texte — fade + légère montée
       gsap.fromTo(
         heroImgRef.current,
@@ -139,7 +189,7 @@ function ChapterPage() {
         { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.2 }
       );
 
-      // Galerie — fade + mouvement vertical léger, sans blur
+      // Galerie — fade + mouvement vertical léger
       const galleryItems = galleryRef.current?.children;
       if (galleryItems) {
         gsap.fromTo(
@@ -153,15 +203,13 @@ function ChapterPage() {
             ease: 'power3.out',
             scrollTrigger: {
               trigger: galleryRef.current,
-              start: 'top 78%',
-              toggleActions: 'play none none reverse',
+              start: 'top 85%',
+              once: true,
             },
           }
         );
       }
 
-      // Barre de progression
-      const currentIndex = chapters.findIndex((c) => c.id === id);
       if (progressFillRef.current) {
         gsap.to(progressFillRef.current, {
           height: `${((currentIndex + 1) / chapters.length) * 100}%`,
@@ -169,33 +217,25 @@ function ChapterPage() {
           ease: 'power2.out',
         });
       }
-    }, containerRef);
+    });
 
-    return () => { ctx.revert(); };
-  }, [id, chapter]);
+    mm.add(REDUCED_MOTION, () => {
+      gsap.set([heroImgRef.current, heroRef.current], { opacity: 1 });
+      gsap.set(progressFillRef.current, { height: `${((currentIndex + 1) / chapters.length) * 100}%` });
+    });
 
-  if (!chapter) {
-    return (
-      <div className="min-h-screen flex items-center justify-center section-dark">
-        <p className="text-2xl font-light">Chapitre non trouvé</p>
-      </div>
-    );
-  }
-
-  const currentIndex = chapters.findIndex((c) => c.id === id);
-  const prevChapter = chapters[currentIndex - 1];
-  const nextChapter = chapters[currentIndex + 1];
-  const isDark = chapter.theme === 'dark';
+    return () => mm.revert();
+  }, [currentIndex]);
 
   return (
     <div ref={containerRef}>
       <Helmet>
-        <title>{chapter.title} — Mikaela</title>
+        <title>{`${chapter.title} — Mikaela`}</title>
         <meta name="description" content={chapter.longDescription} />
         <meta property="og:title" content={`${chapter.title} — Mikaela`} />
         <meta property="og:description" content={chapter.longDescription} />
-        <meta property="og:image" content={chapter.cover} />
-        <meta property="og:type" content="website" />
+        <meta property="og:image" content={new URL(chapter.cover, window.location.origin).href} />
+        <meta property="og:type" content="article" />
       </Helmet>
 
       {/* ── Header fixe ── */}
@@ -209,29 +249,30 @@ function ChapterPage() {
           </svg>
           Accueil
         </Link>
-        <p className="text-sm text-white/50 font-light">
-          {chapter.chapter} <span className="mx-1 opacity-30">·</span> {currentIndex + 1} / {chapters.length}
+        <p className="text-sm text-white/60 font-light">
+          {chapter.chapter} <span className="mx-1 opacity-50" aria-hidden="true">·</span> {currentIndex + 1} / {chapters.length}
         </p>
       </header>
 
       {/* ── Hero immersif ── */}
-      <div className="relative h-[70vh] min-h-[480px] flex items-end overflow-hidden bg-black">
+      <div className="relative h-[70svh] min-h-[480px] flex items-end overflow-hidden bg-black">
         <img
           ref={heroImgRef}
           src={chapter.cover}
           alt={`${chapter.title} — photo principale`}
           className="absolute inset-0 w-full h-full object-cover opacity-0"
+          fetchPriority="high"
           decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
         <div ref={heroRef} className="relative max-w-4xl mx-auto w-full px-6 md:px-12 pb-14 opacity-0">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/50 mb-3 font-medium">
+          <p className="text-xs uppercase tracking-[0.25em] text-white/60 mb-3 font-medium">
             {chapter.chapter}
           </p>
           <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-white mb-4">
             {chapter.title}
           </h1>
-          <p className="text-base md:text-lg text-white/70 max-w-xl font-light leading-relaxed">
+          <p className="text-base md:text-lg text-white/75 max-w-xl font-light leading-relaxed">
             {chapter.description}
           </p>
         </div>
@@ -242,9 +283,9 @@ function ChapterPage() {
         className="sticky top-16 z-40 bg-black/90 backdrop-blur-sm border-b border-white/10"
         aria-label="Navigation chapitres"
       >
-        <div className="max-w-4xl mx-auto px-6 md:px-12 flex items-stretch overflow-x-auto scrollbar-none">
+        <div className="max-w-4xl mx-auto px-6 md:px-12 flex items-stretch justify-center-safe overflow-x-auto scrollbar-none">
           {chapters.map((ch, i) => {
-            const isActive = ch.id === id;
+            const isActive = i === currentIndex;
             const isPast = i < currentIndex;
             return (
               <Link
@@ -252,26 +293,21 @@ function ChapterPage() {
                 to="/chapter/$id"
                 params={{ id: ch.id }}
                 className={`flex-shrink-0 flex flex-col items-center gap-2 px-4 pt-4 pb-3 min-w-[80px] relative
-                  transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white
-                  ${isActive ? 'text-white' : isPast ? 'text-white/45 hover:text-white/70' : 'text-white/25 hover:text-white/50'}`}
+                  transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white
+                  ${isActive ? 'text-white' : isPast ? 'text-white/55 hover:text-white/80' : 'text-white/40 hover:text-white/70'}`}
                 aria-current={isActive ? 'page' : undefined}
               >
                 {/* Numéro */}
-                <span className={`text-[10px] font-semibold tracking-widest transition-colors duration-200
-                  ${isActive ? 'text-white' : isPast ? 'text-white/40' : 'text-white/20'}`}>
+                <span className="text-[10px] font-semibold tracking-widest">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 {/* Dot avec trait horizontal */}
-                <div className="flex items-center w-full">
-                  {i > 0 && (
-                    <div className={`flex-1 h-px transition-colors duration-300 ${isPast || isActive ? 'bg-white/40' : 'bg-white/10'}`} />
-                  )}
+                <div className="flex items-center w-full" aria-hidden="true">
+                  <div className={`flex-1 h-px transition-colors duration-300 ${i === 0 ? 'bg-transparent' : isPast || isActive ? 'bg-white/40' : 'bg-white/10'}`} />
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 mx-1
                     ${isActive ? 'bg-white scale-125 shadow-[0_0_6px_rgba(255,255,255,0.6)]' : isPast ? 'bg-white/50' : 'bg-white/20'}`}
                   />
-                  {i < chapters.length - 1 && (
-                    <div className={`flex-1 h-px transition-colors duration-300 ${isPast ? 'bg-white/40' : 'bg-white/10'}`} />
-                  )}
+                  <div className={`flex-1 h-px transition-colors duration-300 ${i === chapters.length - 1 ? 'bg-transparent' : isPast ? 'bg-white/40' : 'bg-white/10'}`} />
                 </div>
                 {/* Titre */}
                 <span className="text-[11px] font-medium whitespace-nowrap">{ch.title}</span>
@@ -285,10 +321,10 @@ function ChapterPage() {
       </nav>
 
       {/* ── Contenu ── */}
-      <section className={`${isDark ? 'section-dark' : 'section-light'} transition-colors duration-700`}>
+      <main className={themeClass}>
         {/* Long texte */}
         <div className="max-w-3xl mx-auto px-6 md:px-12 pt-16 pb-14">
-          <p className="text-lg md:text-xl font-light leading-relaxed" style={{ opacity: 0.8 }}>
+          <p className="text-lg md:text-xl font-light leading-relaxed opacity-85">
             {chapter.longDescription}
           </p>
         </div>
@@ -301,30 +337,31 @@ function ChapterPage() {
           {chapter.gallery.map((item, i) => (
             <button
               key={i}
+              type="button"
               onClick={() => openLightbox(i)}
-              className={`group text-left space-y-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded-chapter ${
+              className={`group text-left space-y-3 cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded-chapter ${
                 i === 0 ? 'md:col-span-2' : ''
               }`}
-              aria-label={`Agrandir : ${item.caption}`}
+              aria-label={`Agrandir la photo : ${item.caption}`}
             >
-              <div className={`overflow-hidden rounded-chapter ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}>
+              <div className={`overflow-hidden rounded-chapter bg-current/5 ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}>
                 <img
                   src={item.src}
-                  alt={item.caption}
+                  alt=""
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                 />
               </div>
-              <p className="text-sm font-light text-center" style={{ opacity: 0.65 }}>{item.caption}</p>
+              <p className="text-sm font-light text-center opacity-75">{item.caption}</p>
             </button>
           ))}
         </div>
-      </section>
+      </main>
 
       {/* ── Navigation prev / next ── */}
       <nav
-        className={`${isDark ? 'section-dark' : 'section-light'} border-t border-current/10`}
+        className={`${themeClass} border-t border-current/10`}
         aria-label="Navigation entre chapitres"
       >
         <div className="max-w-4xl mx-auto px-6 md:px-12 py-10 flex items-center justify-between gap-4">
@@ -340,7 +377,7 @@ function ChapterPage() {
                 </svg>
               </span>
               <div>
-                <p className="text-xs uppercase tracking-wider" style={{ opacity: 0.45 }}>Précédent</p>
+                <p className="text-xs uppercase tracking-wider opacity-60">Précédent</p>
                 <p className="text-sm font-medium">{prevChapter.title}</p>
               </div>
             </Link>
@@ -353,7 +390,7 @@ function ChapterPage() {
               className="inline-flex items-center gap-3 text-right group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded"
             >
               <div>
-                <p className="text-xs uppercase tracking-wider" style={{ opacity: 0.45 }}>Suivant</p>
+                <p className="text-xs uppercase tracking-wider opacity-60">Suivant</p>
                 <p className="text-sm font-medium">{nextChapter.title}</p>
               </div>
               <span className="w-10 h-10 rounded-full border border-current/30 flex items-center justify-center group-hover:bg-current/10 transition-colors">
@@ -365,15 +402,15 @@ function ChapterPage() {
           ) : (
             <Link
               to="/"
-              className="inline-flex items-center gap-3 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded"
+              className="inline-flex items-center gap-3 text-right group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded"
             >
               <div>
-                <p className="text-xs uppercase tracking-wider" style={{ opacity: 0.45 }}>Fin</p>
+                <p className="text-xs uppercase tracking-wider opacity-60">Fin</p>
                 <p className="text-sm font-medium">Retour à l'accueil</p>
               </div>
               <span className="w-10 h-10 rounded-full border border-current/30 flex items-center justify-center group-hover:bg-current/10 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h18M3 6h18M3 18h18" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10.5L12 3l9 7.5M5 9v11h14V9" />
                 </svg>
               </span>
             </Link>
@@ -381,19 +418,19 @@ function ChapterPage() {
         </div>
       </nav>
 
-      <footer className={`h-20 w-full flex items-center justify-center ${isDark ? 'section-dark' : 'section-light'} border-t border-current/10`}>
-        <p className="text-xs font-light tracking-wide" style={{ opacity: 0.4 }}>
-          © 2026 · Mikaela · Tous droits réservés
+      <footer className={`h-20 w-full flex items-center justify-center ${themeClass} border-t border-current/10`}>
+        <p className="text-xs font-light tracking-wide opacity-60">
+          © {new Date().getFullYear()} · Mikaela · Tous droits réservés
         </p>
       </footer>
 
-      {/* ── Barre de progression desktop ── */}
+      {/* ── Barre de progression desktop (décorative, la timeline ci-dessus porte la navigation) ── */}
       <div
         className="fixed right-8 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center z-50"
         aria-hidden="true"
       >
         {chapters.map((ch, i) => {
-          const isActive = ch.id === id;
+          const isActive = i === currentIndex;
           const isPast = i < currentIndex;
           return (
             <div key={ch.id} className="relative flex flex-col items-center group/dot">
@@ -406,34 +443,31 @@ function ChapterPage() {
               <Link
                 to="/chapter/$id"
                 params={{ id: ch.id }}
-                onMouseEnter={() => setHoveredDot(i)}
-                onMouseLeave={() => setHoveredDot(null)}
+                tabIndex={-1}
                 className={`relative z-10 rounded-full border-2 transition-all duration-300
-                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white
                   ${isActive
-                    ? 'w-3.5 h-3.5 bg-white border-white shadow-[0_0_10px_rgba(255,255,255,0.5)]'
+                    ? 'w-3.5 h-3.5 bg-white border-white shadow-[0_0_0_3px_rgba(0,0,0,0.35)]'
                     : isPast
                     ? 'w-2.5 h-2.5 bg-white/50 border-white/50 hover:bg-white hover:border-white hover:scale-110'
-                    : 'w-2.5 h-2.5 bg-transparent border-zinc-600 hover:border-white/60 hover:scale-110'
+                    : 'w-2.5 h-2.5 bg-black/20 border-zinc-400 hover:border-white/60 hover:scale-110'
                   }`}
-                aria-label={ch.title}
               />
 
               {/* Tooltip */}
-              {hoveredDot === i && (
-                <div className="pointer-events-none absolute right-full mr-5 top-1/2 -translate-y-1/2
-                                flex items-center gap-2 whitespace-nowrap animate-fade-in">
-                  <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className={`text-xs font-medium px-3 py-1.5 rounded-full border backdrop-blur-sm
-                    ${isActive
-                      ? 'bg-white text-black border-white/20'
-                      : 'bg-black/80 text-white border-white/10'}`}>
-                    {ch.title}
-                  </span>
-                </div>
-              )}
+              <div className="pointer-events-none absolute right-full mr-5 top-1/2 -translate-y-1/2
+                              flex items-center gap-2 whitespace-nowrap
+                              opacity-0 translate-x-1 group-hover/dot:opacity-100 group-hover/dot:translate-x-0
+                              transition-all duration-150">
+                <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-medium">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className={`text-xs font-medium px-3 py-1.5 rounded-full border backdrop-blur-sm
+                  ${isActive
+                    ? 'bg-white text-black border-white/20'
+                    : 'bg-black/80 text-white border-white/10'}`}>
+                  {ch.title}
+                </span>
+              </div>
             </div>
           );
         })}
@@ -463,8 +497,19 @@ function ChapterPage() {
   );
 }
 
+function ChapterRoute() {
+  const chapter = Route.useLoaderData();
+  // La clé remonte la page à chaque changement de chapitre : état et animations repartent à zéro.
+  return <ChapterPage key={chapter.id} chapter={chapter} />;
+}
+
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: '/chapter/$id',
-  component: ChapterPage,
+  loader: ({ params }) => {
+    const chapter = chapters.find((c) => c.id === params.id);
+    if (!chapter) throw notFound();
+    return chapter;
+  },
+  component: ChapterRoute,
 });

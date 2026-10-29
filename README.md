@@ -37,14 +37,15 @@ npm install
 npm run dev
 ```
 
-L'app tourne sur [http://localhost:5173](http://localhost:5173).
+L'app tourne sur [http://localhost:3000](http://localhost:3000).
 
 ## Autres commandes
 
 ```bash
-npm run build    # Build de production dans dist/
-npm run start    # Prévisualiser le build (vite preview)
-npm run lint     # Linter ESLint
+npm run build      # Build de production dans dist/
+npm run start      # Prévisualiser le build (vite preview)
+npm run lint       # Linter ESLint
+npm run typecheck  # Vérification TypeScript
 ```
 
 ## Modifier le contenu
