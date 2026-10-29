@@ -80,7 +80,7 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
       role="dialog"
       aria-modal="true"
       aria-label={`Photo ${index + 1} sur ${images.length} — ${item.caption}`}
-      className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+      className="fixed inset-0 z-[100] bg-night/95 backdrop-blur-sm flex items-center justify-center"
       onClick={onClose}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -100,12 +100,12 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: LightboxProps) {
           key={item.src + index}
           src={item.src}
           alt={item.caption}
-          className="max-h-[70vh] w-full object-contain rounded-2xl animate-fade-in-simple"
+          className="max-h-[70vh] w-full object-contain rounded-[3px] animate-fade-in-simple"
           decoding="async"
         />
 
         {/* Caption */}
-        <p className="mt-5 text-sm text-zinc-300 font-light text-center max-w-lg">{item.caption}</p>
+        <p className="mt-6 font-display italic text-lg md:text-xl text-paper/85 font-light text-center max-w-lg">{item.caption}</p>
 
         {/* Navigation gauche / droite */}
         <div className="flex items-center gap-6 mt-6">
@@ -239,7 +239,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
       </Helmet>
 
       {/* ── Header fixe ── */}
-      <header className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 md:px-12 z-50 bg-black/85 backdrop-blur-md border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 md:px-12 z-50 bg-night/85 backdrop-blur-md border-b border-white/5">
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white rounded"
@@ -250,29 +250,30 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
           Accueil
         </Link>
         <p className="text-sm text-white/60 font-light">
-          {chapter.chapter} <span className="mx-1 opacity-50" aria-hidden="true">·</span> {currentIndex + 1} / {chapters.length}
+          <span className="font-display italic text-gold mr-2">Mikaela</span>
+          <span className="hidden sm:inline">{chapter.chapter}</span> <span className="mx-1 opacity-50 hidden sm:inline" aria-hidden="true">·</span> {currentIndex + 1} / {chapters.length}
         </p>
       </header>
 
       {/* ── Hero immersif ── */}
-      <div className="relative h-[70svh] min-h-[480px] flex items-end overflow-hidden bg-black">
+      <div className="relative h-[70svh] min-h-[480px] flex items-end overflow-hidden bg-night">
         <img
           ref={heroImgRef}
           src={chapter.cover}
           alt={`${chapter.title} — photo principale`}
-          className="absolute inset-0 w-full h-full object-cover opacity-0"
+          className="absolute inset-0 w-full h-full object-cover sepia-[0.15] opacity-0"
           fetchPriority="high"
           decoding="async"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-night via-night/40 to-transparent" />
         <div ref={heroRef} className="relative max-w-4xl mx-auto w-full px-6 md:px-12 pb-14 opacity-0">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/60 mb-3 font-medium">
+          <p className="eyebrow eyebrow-left text-gold mb-5">
             {chapter.chapter}
           </p>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-white mb-4">
+          <h1 className="font-display text-6xl md:text-8xl font-light leading-none text-paper mb-5">
             {chapter.title}
           </h1>
-          <p className="text-base md:text-lg text-white/75 max-w-xl font-light leading-relaxed">
+          <p className="font-display italic text-lg md:text-2xl text-paper/80 max-w-xl font-light leading-snug">
             {chapter.description}
           </p>
         </div>
@@ -280,7 +281,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
 
       {/* ── Timeline de progression ── */}
       <nav
-        className="sticky top-16 z-40 bg-black/90 backdrop-blur-sm border-b border-white/10"
+        className="sticky top-16 z-40 bg-night/90 backdrop-blur-md border-b border-white/10"
         aria-label="Navigation chapitres"
       >
         <div className="max-w-4xl mx-auto px-6 md:px-12 flex items-stretch justify-center-safe overflow-x-auto scrollbar-none">
@@ -305,7 +306,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
                 <div className="flex items-center w-full" aria-hidden="true">
                   <div className={`flex-1 h-px transition-colors duration-300 ${i === 0 ? 'bg-transparent' : isPast || isActive ? 'bg-white/40' : 'bg-white/10'}`} />
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 mx-1
-                    ${isActive ? 'bg-white scale-125 shadow-[0_0_6px_rgba(255,255,255,0.6)]' : isPast ? 'bg-white/50' : 'bg-white/20'}`}
+                    ${isActive ? 'bg-gold scale-125 shadow-[0_0_8px_rgba(200,164,106,0.7)]' : isPast ? 'bg-white/50' : 'bg-white/20'}`}
                   />
                   <div className={`flex-1 h-px transition-colors duration-300 ${i === chapters.length - 1 ? 'bg-transparent' : isPast ? 'bg-white/40' : 'bg-white/10'}`} />
                 </div>
@@ -313,7 +314,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
                 <span className="text-[11px] font-medium whitespace-nowrap">{ch.title}</span>
                 {/* Soulignement actif */}
                 <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-300
-                  ${isActive ? 'bg-white' : 'bg-transparent'}`} />
+                  ${isActive ? 'bg-gold' : 'bg-transparent'}`} />
               </Link>
             );
           })}
@@ -323,37 +324,49 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
       {/* ── Contenu ── */}
       <main className={themeClass}>
         {/* Long texte */}
-        <div className="max-w-3xl mx-auto px-6 md:px-12 pt-16 pb-14">
-          <p className="text-lg md:text-xl font-light leading-relaxed opacity-85">
+        <div className="max-w-3xl mx-auto px-6 md:px-12 pt-20 pb-16 md:pt-28 md:pb-20">
+          <p className="font-display text-xl md:text-3xl font-light leading-relaxed md:leading-relaxed
+            first-letter:float-left first-letter:text-7xl md:first-letter:text-8xl first-letter:leading-[0.8]
+            first-letter:mr-3 first-letter:mt-1 first-letter:text-gold first-letter:font-normal">
             {chapter.longDescription}
           </p>
+          <div className="mt-12 flex items-center gap-4 opacity-50" aria-hidden="true">
+            <span className="h-px flex-1 bg-current/40" />
+            <span className="text-xs tracking-[0.3em] uppercase">{chapter.gallery.length} photos</span>
+            <span className="h-px flex-1 bg-current/40" />
+          </div>
         </div>
 
         {/* Galerie */}
         <div
           ref={galleryRef}
-          className="max-w-6xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pb-24"
+          className="max-w-6xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-x-12 md:gap-y-16 pb-28"
         >
           {chapter.gallery.map((item, i) => (
             <button
               key={i}
               type="button"
               onClick={() => openLightbox(i)}
-              className={`group text-left space-y-3 cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded-chapter ${
+              className={`group text-left space-y-4 cursor-zoom-in focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current rounded-chapter ${
                 i === 0 ? 'md:col-span-2' : ''
               }`}
               aria-label={`Agrandir la photo : ${item.caption}`}
             >
-              <div className={`overflow-hidden rounded-chapter bg-current/5 ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}>
+              <div className={`photo-print transition-transform duration-500 ease-out group-hover:-translate-y-1 ${i > 0 && i % 2 === 0 ? 'md:mt-12' : ''}`}>
+                <div className={`overflow-hidden rounded-[2px] ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/5]'}`}>
                 <img
                   src={item.src}
                   alt=""
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
-                />
+                  />
+                </div>
               </div>
-              <p className="text-sm font-light text-center opacity-75">{item.caption}</p>
+              <p className="flex items-baseline gap-3 text-sm font-light">
+                <span className="font-display italic text-gold text-base" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <span className="opacity-75">{item.caption}</span>
+              </p>
             </button>
           ))}
         </div>
@@ -364,7 +377,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
         className={`${themeClass} border-t border-current/10`}
         aria-label="Navigation entre chapitres"
       >
-        <div className="max-w-4xl mx-auto px-6 md:px-12 py-10 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-6 md:px-12 py-12 flex items-center justify-between gap-4">
           {prevChapter ? (
             <Link
               to="/chapter/$id"
@@ -378,7 +391,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
               </span>
               <div>
                 <p className="text-xs uppercase tracking-wider opacity-60">Précédent</p>
-                <p className="text-sm font-medium">{prevChapter.title}</p>
+                <p className="font-display text-xl md:text-2xl font-light">{prevChapter.title}</p>
               </div>
             </Link>
           ) : <div />}
@@ -391,7 +404,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
             >
               <div>
                 <p className="text-xs uppercase tracking-wider opacity-60">Suivant</p>
-                <p className="text-sm font-medium">{nextChapter.title}</p>
+                <p className="font-display text-xl md:text-2xl font-light">{nextChapter.title}</p>
               </div>
               <span className="w-10 h-10 rounded-full border border-current/30 flex items-center justify-center group-hover:bg-current/10 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -406,7 +419,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
             >
               <div>
                 <p className="text-xs uppercase tracking-wider opacity-60">Fin</p>
-                <p className="text-sm font-medium">Retour à l'accueil</p>
+                <p className="font-display text-xl md:text-2xl font-light">Retour à l'accueil</p>
               </div>
               <span className="w-10 h-10 rounded-full border border-current/30 flex items-center justify-center group-hover:bg-current/10 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -418,9 +431,10 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
         </div>
       </nav>
 
-      <footer className={`h-20 w-full flex items-center justify-center ${themeClass} border-t border-current/10`}>
-        <p className="text-xs font-light tracking-wide opacity-60">
-          © {new Date().getFullYear()} · Mikaela · Tous droits réservés
+      <footer className={`w-full py-12 flex flex-col items-center justify-center gap-2 ${themeClass} border-t border-current/10`}>
+        <p className="font-display italic text-2xl font-light text-gold">Mikaela</p>
+        <p className="text-xs font-light tracking-wide opacity-50">
+          © {new Date().getFullYear()} · Tous droits réservés
         </p>
       </footer>
 
@@ -446,7 +460,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
                 tabIndex={-1}
                 className={`relative z-10 rounded-full border-2 transition-all duration-300
                   ${isActive
-                    ? 'w-3.5 h-3.5 bg-white border-white shadow-[0_0_0_3px_rgba(0,0,0,0.35)]'
+                    ? 'w-3.5 h-3.5 bg-gold border-gold shadow-[0_0_0_3px_rgba(0,0,0,0.35)]'
                     : isPast
                     ? 'w-2.5 h-2.5 bg-white/50 border-white/50 hover:bg-white hover:border-white hover:scale-110'
                     : 'w-2.5 h-2.5 bg-black/20 border-zinc-400 hover:border-white/60 hover:scale-110'
@@ -463,7 +477,7 @@ function ChapterPage({ chapter }: { chapter: Chapter }) {
                 </span>
                 <span className={`text-xs font-medium px-3 py-1.5 rounded-full border backdrop-blur-sm
                   ${isActive
-                    ? 'bg-white text-black border-white/20'
+                    ? 'bg-gold text-night border-gold/20'
                     : 'bg-black/80 text-white border-white/10'}`}>
                   {ch.title}
                 </span>

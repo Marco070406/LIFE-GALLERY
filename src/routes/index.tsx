@@ -109,7 +109,7 @@ function HomePage() {
     <div ref={containerRef}>
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="min-h-svh w-full flex flex-col items-center justify-center bg-black text-white relative overflow-hidden">
+      <section className="min-h-svh w-full flex flex-col items-center justify-center bg-night text-paper relative overflow-hidden">
         {/* Photo de fond */}
         <div className="absolute inset-0">
           <img
@@ -117,24 +117,25 @@ function HomePage() {
             alt=""
             aria-hidden="true"
             fetchPriority="high"
-            className="w-full h-full object-cover opacity-25 scale-105"
+            className="w-full h-full object-cover opacity-30 scale-105 sepia-[0.35] blur-[2px]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-night/70 via-night/40 to-night" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,var(--night)_85%)]" />
         </div>
 
         <div className="relative text-center px-6 max-w-3xl">
-          <p className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-6 font-medium">
+          <p className="eyebrow text-gold mb-8">
             Une vie en images
           </p>
           <h1
             ref={heroNameRef}
-            className="text-6xl md:text-8xl font-semibold tracking-tight mb-6 opacity-0"
+            className="font-display italic font-light text-7xl md:text-[9rem] leading-none mb-8 opacity-0"
           >
             Mikaela
           </h1>
           <p
             ref={heroSubRef}
-            className="text-lg md:text-xl text-zinc-300 mb-12 opacity-0 font-light leading-relaxed max-w-md mx-auto"
+            className="text-lg md:text-xl text-paper/75 mb-12 opacity-0 font-light leading-relaxed max-w-md mx-auto"
           >
             Cinq chapitres. Une seule histoire.<br />Racontée en lumière.
           </p>
@@ -142,7 +143,7 @@ function HomePage() {
             <button
               type="button"
               onClick={() => scrollToSection(0)}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full text-base font-medium hover:bg-zinc-100 active:scale-95 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white cursor-pointer"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-paper text-night rounded-full text-sm tracking-wide font-medium hover:bg-gold active:scale-95 transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-paper cursor-pointer"
             >
               Découvrir l'histoire
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -199,7 +200,7 @@ function HomePage() {
                 className={`relative rounded-full border-2 transition-all duration-300 z-10 cursor-pointer
                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white
                   ${isActive
-                    ? 'w-3.5 h-3.5 bg-white border-white shadow-[0_0_0_3px_rgba(0,0,0,0.35)]'
+                    ? 'w-3.5 h-3.5 bg-gold border-gold shadow-[0_0_0_3px_rgba(0,0,0,0.35)]'
                     : 'w-2.5 h-2.5 bg-black/20 border-zinc-400 hover:border-white hover:bg-white/30'}`}
               />
               {/* Label au survol / focus */}
@@ -236,43 +237,60 @@ function HomePage() {
             id={chapter.id}
             ref={(el) => { if (el) sectionsRef.current[index] = el; }}
             aria-labelledby={`${chapter.id}-title`}
-            className={`min-h-svh w-full flex flex-col items-center justify-center py-20
+            className={`relative overflow-hidden min-h-svh w-full flex flex-col items-center justify-center py-24 md:py-32
               ${chapter.theme === 'light' ? 'section-light' : 'section-dark'}`}
           >
-            <div className="max-w-4xl mx-auto px-6 md:px-12 text-center">
-              <p className="text-xs uppercase tracking-[0.25em] mb-4 opacity-60 font-medium animate-item">
-                {chapter.chapter}
-              </p>
-              <h2 id={`${chapter.id}-title`} className="text-4xl md:text-6xl font-semibold tracking-tight mb-5 animate-item">
-                {chapter.title}
-              </h2>
-              <p className="text-base md:text-lg mb-14 max-w-2xl mx-auto leading-relaxed opacity-80 animate-item">
-                {chapter.description}
-              </p>
-              <div className="relative mb-14 animate-item">
-                <img
-                  src={chapter.cover}
-                  alt={`${chapter.title} — couverture`}
-                  loading="lazy"
-                  decoding="async"
-                  width={440}
-                  height={440}
-                  className="w-72 h-72 md:w-[440px] md:h-[440px] object-cover rounded-chapter shadow-2xl mx-auto parallax-image"
-                />
-              </div>
-              <Link
-                to="/chapter/$id"
-                params={{ id: chapter.id }}
-                className="btn-chapter group inline-flex items-center gap-2 px-10 py-3.5 border border-current
-                  rounded-full text-sm font-medium animate-item
-                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+            <div className="relative w-full max-w-6xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+              {/* Numéro en filigrane */}
+              <span
+                aria-hidden="true"
+                className={`chapter-numeral absolute -top-10 md:-top-16 text-[9rem] md:text-[16rem] pointer-events-none
+                  ${index % 2 === 0 ? 'right-4 md:right-10' : 'left-4 md:left-10'}`}
               >
-                Voir toutes les photos
-                <span className="sr-only"> du chapitre {chapter.title}</span>
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+
+              {/* Tirage photo */}
+              <div className={`relative animate-item ${index % 2 === 1 ? 'md:order-2' : ''}`}>
+                <div className={`photo-print mx-auto max-w-[340px] md:max-w-none transition-transform duration-700 ease-out
+                  ${index % 2 === 0 ? '-rotate-[1.5deg] hover:rotate-0' : 'rotate-[1.5deg] hover:rotate-0'}`}>
+                  <img
+                    src={chapter.cover}
+                    alt={`${chapter.title} — couverture`}
+                    loading="lazy"
+                    decoding="async"
+                    width={440}
+                    height={550}
+                    className="w-full aspect-[4/5] object-cover rounded-[2px] parallax-image"
+                  />
+                </div>
+              </div>
+
+              {/* Texte */}
+              <div className="relative text-center md:text-left">
+                <p className="eyebrow md:eyebrow-left mb-6 opacity-70 animate-item">
+                  {chapter.chapter}
+                </p>
+                <h2 id={`${chapter.id}-title`} className="font-display text-5xl md:text-7xl font-light leading-[1.05] mb-6 animate-item">
+                  {chapter.title}
+                </h2>
+                <p className="font-display italic text-lg md:text-2xl font-light mb-10 max-w-md mx-auto md:mx-0 leading-snug opacity-80 animate-item">
+                  {chapter.description}
+                </p>
+                <Link
+                  to="/chapter/$id"
+                  params={{ id: chapter.id }}
+                  className="btn-chapter group inline-flex items-center gap-2 px-8 py-3.5 border border-current/40
+                    rounded-full text-sm font-medium tracking-wide animate-item
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+                >
+                  Ouvrir le chapitre
+                  <span className="sr-only"> {chapter.title}</span>
+                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </section>
         ))}
@@ -280,7 +298,7 @@ function HomePage() {
 
       {/* ── Navigation mobile ─────────────────────────────────────────── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-night/90 backdrop-blur-md border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
         aria-label="Chapitres"
       >
         <div className="flex overflow-x-auto scrollbar-none py-3 px-4 gap-2 justify-center-safe">
@@ -293,7 +311,7 @@ function HomePage() {
               className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl
                 hover:text-white hover:bg-white/10 transition-all duration-200
                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white
-                ${activeIndex === i ? 'text-white bg-white/10' : 'text-white/60'}`}
+                ${activeIndex === i ? 'text-gold bg-white/10' : 'text-white/60'}`}
             >
               <span className="text-xs font-medium">{String(i + 1).padStart(2, '0')}</span>
               <span className="text-xs whitespace-nowrap">{ch.title}</span>
@@ -303,8 +321,9 @@ function HomePage() {
       </nav>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
-      <footer className="h-20 w-full flex items-center justify-center section-dark mb-20 md:mb-0">
-        <p className="text-xs opacity-60 font-light tracking-wide">© {new Date().getFullYear()} · Mikaela · Tous droits réservés</p>
+      <footer className="w-full py-16 flex flex-col items-center justify-center gap-3 section-dark border-t border-white/5 mb-20 md:mb-0">
+        <p className="font-display italic text-3xl font-light text-gold">Mikaela</p>
+        <p className="text-xs opacity-50 font-light tracking-wide">© {new Date().getFullYear()} · Tous droits réservés</p>
       </footer>
 
     </div>

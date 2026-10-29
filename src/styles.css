@@ -2,6 +2,21 @@
 
 @theme inline {
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-night: var(--night);
+  --color-mist: var(--mist);
+  --color-gold: var(--gold);
+}
+
+/* ── Palette « album de famille » ───────────────────────────────────────── */
+:root {
+  --paper: #f5f0e8;   /* papier photo crème */
+  --ink:   #1c1917;   /* encre chaude */
+  --night: #0e0c0a;   /* noir chaud */
+  --mist:  #ece4d8;   /* papier plus sombre, cadres */
+  --gold:  #c8a46a;   /* accent doré */
 }
 
 html, body {
@@ -11,24 +26,95 @@ html, body {
 
 body {
   @apply font-sans antialiased;
-  background: #fff;
-  color: #111;
+  background: var(--night);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--night);
+}
+
+/* ── Grain photo (texture argentique très légère) ───────────────────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ── Thèmes ─────────────────────────────────────────────────────────────── */
 .section-light {
-  background: #fff;
-  color: #111;
+  background: var(--paper);
+  color: var(--ink);
+  --frame: #fffdf9;
 }
 
 .section-dark {
-  background: #0a0a0a;
-  color: #e8e8e8;
+  background: var(--night);
+  color: #ede6da;
+  --frame: #1a1714;
+}
+
+/* ── Typographie ────────────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.eyebrow::before,
+.eyebrow::after {
+  content: "";
+  width: 2rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.4;
+}
+/* Variante alignée à gauche (utilisable avec un préfixe responsive : md:eyebrow-left) */
+@utility eyebrow-left {
+  &::after { display: none; }
+}
+
+/* Grand numéro de chapitre en filigrane */
+.chapter-numeral {
+  font-family: var(--font-display);
+  font-weight: 300;
+  line-height: 0.8;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+  opacity: 0.2;
+  user-select: none;
 }
 
 /* ── Formes ─────────────────────────────────────────────────────────────── */
 .rounded-chapter {
-  border-radius: 20px;
+  border-radius: 6px;
+}
+
+/* Tirage photo : marge blanche façon album */
+.photo-print {
+  background: var(--frame);
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 20px 40px -20px rgba(0, 0, 0, 0.45);
+}
+@media (min-width: 768px) {
+  .photo-print { padding: 14px; }
 }
 
 /* ── Bouton chapitre ─────────────────────────────────────────────────────── */
@@ -49,16 +135,16 @@ body {
 
 /* Sur fond clair : hover = fond noir, texte blanc */
 .section-light .btn-chapter:hover {
-  background-color: #111;
-  color: #fff;
-  border-color: #111;
+  background-color: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 /* Sur fond sombre : hover = fond blanc, texte noir */
 .section-dark .btn-chapter:hover {
-  background-color: #fff;
-  color: #111;
-  border-color: #fff;
+  background-color: var(--paper);
+  color: var(--night);
+  border-color: var(--paper);
 }
 
 /* ── Images ─────────────────────────────────────────────────────────────── */
