@@ -9,6 +9,7 @@ dist/
 
 # Environnement
 .env*
+!.env.example
 
 # Éditeurs et OS
 .DS_Store

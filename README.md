@@ -48,6 +48,28 @@ npm run lint       # Linter ESLint
 npm run typecheck  # Vérification TypeScript
 ```
 
+## Souvenirs de la famille (photos + messages)
+
+En bas de chaque chapitre, les proches peuvent envoyer une photo avec un message.
+Un **code famille** est demandé pour envoyer. Les photos sont redimensionnées dans le navigateur
+(1600 px max) puis stockées avec les messages dans une base **Neon** (Postgres).
+
+### Mise en route
+
+1. Créer un projet sur [console.neon.tech](https://console.neon.tech) et copier la chaîne de connexion (`postgresql://...`).
+2. En local : copier `.env.example` en `.env` et remplir `DATABASE_URL` et `FAMILY_CODE`.
+3. Sur Vercel : *Settings → Environment Variables*, ajouter les mêmes variables puis redéployer.
+
+La table `memories` est créée automatiquement au premier appel.
+
+### API
+
+- `GET /api/memories?chapter=<id>` — souvenirs d'un chapitre
+- `POST /api/memories` — ajoute un souvenir (code famille requis)
+- `GET /api/photo?id=<id>` — l'image d'un souvenir
+
+Les fonctions sont dans `api/` (format Vercel) et sont servies par Vite en développement.
+
 ## Modifier le contenu
 
 - **Chapitres, textes, images** : éditer `src/lib/chapters.ts`
