@@ -1,5 +1,5 @@
-import { chapters } from '../src/lib/chapters';
-import { db, handleError, HttpError, isFamilyCode, json } from './_lib/db';
+import { chapters } from '../src/lib/chapters.js';
+import { db, handleError, HttpError, isFamilyCode, json } from './_lib/db.js';
 
 const MAX_AUTHOR = 60;
 const MAX_MESSAGE = 1000;

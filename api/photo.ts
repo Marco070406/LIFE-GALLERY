@@ -1,4 +1,4 @@
-import { db, handleError, HttpError } from './_lib/db';
+import { db, handleError, HttpError } from './_lib/db.js';
 
 // GET /api/photo?id=42 — renvoie l'image stockée. Une photo ne change jamais : cache long.
 export async function GET(request: Request) {
