@@ -1,4 +1,4 @@
-import { assertAdminCode, handleError, HttpError, json } from './_lib/db.js';
+import { handleError, HttpError, json, verifyCode } from './_lib/db.js';
 
 // POST /api/admin — { adminCode } : vérifie le code avant d'activer le mode administrateur
 export async function POST(request: Request) {
@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => {
       throw new HttpError(400, 'Requête invalide.');
     });
-    assertAdminCode(body.adminCode);
+    await verifyCode(request, 'admin', body.adminCode);
     return json({ ok: true });
   } catch (err) {
     return handleError(err);

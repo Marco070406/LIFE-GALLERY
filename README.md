@@ -24,7 +24,8 @@ src/
     ├── __root.tsx              # Layout racine
     ├── index.tsx               # Page d'accueil (/)
     └── chapter/
-        └── index.tsx           # Page chapitre (/chapter/$id)
+        ├── index.tsx           # Route chapitre (/chapter/$id)
+        └── ChapterPage.tsx     # Page chapitre, chargée à la demande
 
 public/
 └── images/                     # Photos et illustrations par chapitre
@@ -75,12 +76,15 @@ En bas de la section « Souvenirs de la famille », le lien discret **Administra
 - `POST /api/admin` — vérifie le code administrateur
 - `GET /api/photo?id=<id>` — l'image d'un souvenir
 
+Sécurité : 10 codes faux au maximum par quart d'heure et par adresse IP (table `code_failures`),
+et le contenu réel de chaque photo est vérifié (JPEG, PNG ou WebP).
+
 Les fonctions sont dans `api/` (format Vercel) et sont servies par Vite en développement.
 
 ## Modifier le contenu
 
 - **Chapitres, textes, images** : éditer `src/lib/chapters.ts`
 - **Page d'accueil** : `src/routes/index.tsx`
-- **Page d'un chapitre** : `src/routes/chapter/index.tsx`
+- **Page d'un chapitre** : `src/routes/chapter/ChapterPage.tsx`
 - **Layout global** : `src/routes/__root.tsx`
 - **Images** : déposer les fichiers dans `public/images/`

@@ -410,7 +410,7 @@ export function FamilyMemories({ chapterId, chapterTitle }: FamilyMemoriesProps)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'La suppression a échoué.';
       setDeleteError({ id: memory.id, message });
-      if (/administrateur incorrect/i.test(message)) handleAdminLogout();
+      if (/administrateur incorrect|trop de codes/i.test(message)) handleAdminLogout();
     } finally {
       setDeletingId(null);
     }

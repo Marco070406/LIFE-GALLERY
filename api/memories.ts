@@ -1,10 +1,16 @@
 import { chapters } from '../src/lib/chapters.js';
-import { assertAdminCode, db, handleError, HttpError, isFamilyCode, json } from './_lib/db.js';
+import { db, handleError, HttpError, json, verifyCode } from './_lib/db.js';
 
 const MAX_AUTHOR = 60;
 const MAX_MESSAGE = 1000;
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+/** Type réel de l'image d'après ses premiers octets (on ne se fie pas au type annoncé). */
+function sniffImageType(bytes: Buffer): string | null {
+  if (bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
+  if (bytes.length > 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+  if (bytes.length > 12 && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+  return null;
+}
 
 interface MemoryRow {
   id: string;
@@ -60,8 +66,7 @@ export async function POST(request: Request) {
       throw new HttpError(400, 'Requête invalide.');
     });
 
-    if (!process.env.FAMILY_CODE) throw new HttpError(503, "L'envoi de photos n'est pas encore configuré.");
-    if (!isFamilyCode(body.code)) throw new HttpError(401, 'Code famille incorrect.');
+    await verifyCode(request, 'family', body.code);
 
     const chapterId = assertChapter(body.chapterId);
     const author = typeof body.author === 'string' ? body.author.trim() : '';
@@ -70,11 +75,13 @@ export async function POST(request: Request) {
     if (author.length > MAX_AUTHOR) throw new HttpError(400, `Prénom trop long (${MAX_AUTHOR} caractères max).`);
     if (message.length > MAX_MESSAGE) throw new HttpError(400, `Message trop long (${MAX_MESSAGE} caractères max).`);
 
-    const match = typeof body.image === 'string' ? /^data:([\w/+.-]+);base64,(.+)$/.exec(body.image) : null;
-    if (!match || !ALLOWED_TYPES.includes(match[1])) throw new HttpError(400, 'Photo invalide (JPEG, PNG ou WebP).');
-    const bytes = Buffer.from(match[2], 'base64');
+    const match = typeof body.image === 'string' ? /^data:[\w/+.-]+;base64,(.+)$/.exec(body.image) : null;
+    if (!match) throw new HttpError(400, 'Photo invalide (JPEG, PNG ou WebP).');
+    const bytes = Buffer.from(match[1], 'base64');
     if (bytes.length === 0) throw new HttpError(400, 'Photo vide.');
     if (bytes.length > MAX_IMAGE_BYTES) throw new HttpError(413, 'Photo trop lourde (3 Mo max).');
+    const imageType = sniffImageType(bytes);
+    if (!imageType) throw new HttpError(400, 'Photo invalide (JPEG, PNG ou WebP).');
 
     const width = Number.isInteger(body.width) ? body.width : null;
     const height = Number.isInteger(body.height) ? body.height : null;
@@ -82,7 +89,7 @@ export async function POST(request: Request) {
     const sql = await db();
     const [row] = (await sql`
       INSERT INTO memories (chapter_id, author, message, image, image_type, width, height)
-      VALUES (${chapterId}, ${author}, ${message}, decode(${bytes.toString('hex')}, 'hex'), ${match[1]}, ${width}, ${height})
+      VALUES (${chapterId}, ${author}, ${message}, decode(${bytes.toString('hex')}, 'hex'), ${imageType}, ${width}, ${height})
       RETURNING id, chapter_id, author, message, width, height, created_at`) as MemoryRow[];
 
     return json({ memory: toMemory(row) }, { status: 201 });
@@ -98,7 +105,7 @@ export async function DELETE(request: Request) {
       throw new HttpError(400, 'Requête invalide.');
     });
 
-    assertAdminCode(body.adminCode);
+    await verifyCode(request, 'admin', body.adminCode);
 
     const id = typeof body.id === 'string' || typeof body.id === 'number' ? String(body.id) : '';
     if (!/^\d+$/.test(id)) throw new HttpError(400, 'Identifiant invalide.');

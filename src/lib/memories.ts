@@ -21,6 +21,7 @@ const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.85;
 
 async function readError(res: Response): Promise<string> {
+  if (res.status === 413) return 'Photo trop lourde. Essayez une photo plus petite.';
   try {
     const data = await res.json();
     if (typeof data?.error === 'string') return data.error;
