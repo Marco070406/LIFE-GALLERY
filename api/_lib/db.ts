@@ -42,13 +42,22 @@ export async function db() {
   return client;
 }
 
-/** Compare le code saisi au code famille sans fuite de timing. */
-export function isFamilyCode(input: unknown): boolean {
-  const expected = process.env.FAMILY_CODE;
+/** Compare un code saisi à une variable d'environnement, sans fuite de timing. */
+function matchesSecret(input: unknown, expected: string | undefined): boolean {
   if (!expected || typeof input !== 'string') return false;
   const a = createHash('sha256').update(input.trim()).digest();
   const b = createHash('sha256').update(expected.trim()).digest();
   return timingSafeEqual(a, b);
+}
+
+export function isFamilyCode(input: unknown): boolean {
+  return matchesSecret(input, process.env.FAMILY_CODE);
+}
+
+/** Vérifie le code administrateur (suppression des souvenirs). Lève une erreur sinon. */
+export function assertAdminCode(input: unknown) {
+  if (!process.env.ADMIN_CODE) throw new HttpError(503, "La suppression n'est pas encore configurée.");
+  if (!matchesSecret(input, process.env.ADMIN_CODE)) throw new HttpError(401, 'Code administrateur incorrect.');
 }
 
 export function json(data: unknown, init: ResponseInit = {}) {

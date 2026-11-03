@@ -57,15 +57,22 @@ Un **code famille** est demandé pour envoyer. Les photos sont redimensionnées 
 ### Mise en route
 
 1. Créer un projet sur [console.neon.tech](https://console.neon.tech) et copier la chaîne de connexion (`postgresql://...`).
-2. En local : copier `.env.example` en `.env` et remplir `DATABASE_URL` et `FAMILY_CODE`.
+2. En local : copier `.env.example` en `.env` et remplir `DATABASE_URL`, `FAMILY_CODE` et `ADMIN_CODE`.
 3. Sur Vercel : *Settings → Environment Variables*, ajouter les mêmes variables puis redéployer.
 
 La table `memories` est créée automatiquement au premier appel.
+
+### Supprimer un souvenir
+
+En bas de la section « Souvenirs de la famille », le lien discret **Administration** demande le code
+`ADMIN_CODE`. Une fois validé (pour la durée de l'onglet), un bouton **Supprimer** apparaît sous chaque souvenir.
 
 ### API
 
 - `GET /api/memories?chapter=<id>` — souvenirs d'un chapitre
 - `POST /api/memories` — ajoute un souvenir (code famille requis)
+- `DELETE /api/memories` — supprime un souvenir (code administrateur requis)
+- `POST /api/admin` — vérifie le code administrateur
 - `GET /api/photo?id=<id>` — l'image d'un souvenir
 
 Les fonctions sont dans `api/` (format Vercel) et sont servies par Vite en développement.

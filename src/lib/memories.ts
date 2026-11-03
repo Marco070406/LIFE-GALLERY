@@ -59,6 +59,25 @@ export async function preparePhoto(file: File): Promise<{ dataUrl: string; width
   return { dataUrl: canvas.toDataURL('image/jpeg', JPEG_QUALITY), width, height };
 }
 
+/** Vérifie le code administrateur ; lève une erreur avec le message du serveur sinon. */
+export async function verifyAdminCode(adminCode: string): Promise<void> {
+  const res = await fetch('/api/admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adminCode }),
+  });
+  if (!res.ok) throw new Error(await readError(res));
+}
+
+export async function deleteMemory(id: string, adminCode: string): Promise<void> {
+  const res = await fetch('/api/memories', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, adminCode }),
+  });
+  if (!res.ok) throw new Error(await readError(res));
+}
+
 export async function createMemory(input: NewMemory): Promise<Memory> {
   const { dataUrl, width, height } = await preparePhoto(input.photo);
   const res = await fetch('/api/memories', {

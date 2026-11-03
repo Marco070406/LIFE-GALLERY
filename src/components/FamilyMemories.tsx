@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { createMemory, fetchMemories, type Memory } from '../lib/memories';
+import { createMemory, deleteMemory, fetchMemories, verifyAdminCode, type Memory } from '../lib/memories';
 import { Lightbox } from './Lightbox';
 
 const AUTHOR_KEY = 'life-gallery:author';
 const CODE_KEY = 'life-gallery:family-code';
+const ADMIN_KEY = 'life-gallery:admin-code';
 const MAX_MESSAGE = 1000;
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -14,6 +15,111 @@ function readPref(key: string): string {
 }
 function writePref(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* stockage indisponible */ }
+}
+
+// Code administrateur : gardé seulement le temps de l'onglet (sessionStorage).
+function readAdminCode(): string | null {
+  try { return sessionStorage.getItem(ADMIN_KEY); } catch { return null; }
+}
+function writeAdminCode(code: string | null) {
+  try {
+    if (code) sessionStorage.setItem(ADMIN_KEY, code);
+    else sessionStorage.removeItem(ADMIN_KEY);
+  } catch { /* stockage indisponible */ }
+}
+
+// ── Accès administrateur (bas de section) ──────────────────────────────────
+interface AdminBarProps {
+  adminCode: string | null;
+  onLogin: (code: string) => void;
+  onLogout: () => void;
+}
+
+function AdminBar({ adminCode, onLogin, onLogout }: AdminBarProps) {
+  const inputId = useId();
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (adminCode) {
+    return (
+      <div className="mt-14 flex flex-wrap items-center justify-center gap-3 text-sm">
+        <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 text-gold px-4 py-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-gold" aria-hidden="true" />
+          Mode administrateur
+        </span>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="underline underline-offset-4 opacity-70 hover:opacity-100 cursor-pointer"
+        >
+          Quitter
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <div className="mt-14 text-center">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs underline underline-offset-4 opacity-40 hover:opacity-80 transition-opacity cursor-pointer"
+        >
+          Administration
+        </button>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim()) return;
+    setChecking(true);
+    setError(null);
+    try {
+      await verifyAdminCode(code.trim());
+      onLogin(code.trim());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Vérification impossible.');
+      setChecking(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-14 mx-auto max-w-sm text-center space-y-3">
+      <label htmlFor={inputId} className="block text-sm font-medium">Code administrateur</label>
+      <div className="flex gap-2">
+        <input
+          id={inputId}
+          type="password"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          autoComplete="off"
+          autoFocus
+          disabled={checking}
+          className="flex-1 min-w-0 rounded-full border border-current/25 bg-transparent px-4 py-2.5 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/30"
+        />
+        <button
+          type="submit"
+          disabled={checking}
+          className="btn-chapter rounded-full border border-current/40 px-5 py-2.5 text-sm font-medium cursor-pointer disabled:opacity-50"
+        >
+          {checking ? '…' : 'Valider'}
+        </button>
+      </div>
+      {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+      <button
+        type="button"
+        onClick={() => { setOpen(false); setCode(''); setError(null); }}
+        className="text-xs underline underline-offset-4 opacity-50 hover:opacity-80 cursor-pointer"
+      >
+        Annuler
+      </button>
+    </form>
+  );
 }
 
 // ── Formulaire d'ajout ─────────────────────────────────────────────────────
@@ -258,6 +364,9 @@ export function FamilyMemories({ chapterId, chapterTitle }: FamilyMemoriesProps)
   const [formOpen, setFormOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [justAdded, setJustAdded] = useState<string | null>(null);
+  const [adminCode, setAdminCode] = useState<string | null>(() => readAdminCode());
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<{ id: string; message: string } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -277,6 +386,35 @@ export function FamilyMemories({ chapterId, chapterTitle }: FamilyMemoriesProps)
     setJustAdded(memory.id);
     setFormOpen(false);
   }, []);
+
+  const handleAdminLogin = useCallback((code: string) => {
+    writeAdminCode(code);
+    setAdminCode(code);
+  }, []);
+  const handleAdminLogout = useCallback(() => {
+    writeAdminCode(null);
+    setAdminCode(null);
+    setDeleteError(null);
+  }, []);
+
+  const handleDelete = async (memory: Memory) => {
+    if (!adminCode) return;
+    const label = memory.message ? `« ${memory.message.slice(0, 60)}${memory.message.length > 60 ? '…' : ''} »` : 'cette photo';
+    if (!window.confirm(`Supprimer définitivement le souvenir de ${memory.author} (${label}) ?`)) return;
+
+    setDeletingId(memory.id);
+    setDeleteError(null);
+    try {
+      await deleteMemory(memory.id, adminCode);
+      setMemories((list) => (list ?? []).filter((m) => m.id !== memory.id));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'La suppression a échoué.';
+      setDeleteError({ id: memory.id, message });
+      if (/administrateur incorrect/i.test(message)) handleAdminLogout();
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const closeForm = useCallback(() => setFormOpen(false), []);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
@@ -361,11 +499,32 @@ export function FamilyMemories({ chapterId, chapterTitle }: FamilyMemoriesProps)
                       <span aria-hidden="true"> · </span>
                       <time dateTime={memory.createdAt}>{dateFormat.format(new Date(memory.createdAt))}</time>
                     </p>
+                    {adminCode && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(memory)}
+                        disabled={deletingId === memory.id}
+                        className="inline-flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4h6v3" />
+                        </svg>
+                        {deletingId === memory.id ? 'Suppression…' : 'Supprimer'}
+                        <span className="sr-only"> le souvenir de {memory.author}</span>
+                      </button>
+                    )}
+                    {deleteError?.id === memory.id && (
+                      <p role="alert" className="text-sm text-red-500">{deleteError.message}</p>
+                    )}
                   </figcaption>
                 </figure>
               </li>
             ))}
           </ul>
+        )}
+
+        {!loadError && (
+          <AdminBar adminCode={adminCode} onLogin={handleAdminLogin} onLogout={handleAdminLogout} />
         )}
       </div>
 

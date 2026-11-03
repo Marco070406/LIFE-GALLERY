@@ -1,5 +1,5 @@
 import { chapters } from '../src/lib/chapters.js';
-import { db, handleError, HttpError, isFamilyCode, json } from './_lib/db.js';
+import { assertAdminCode, db, handleError, HttpError, isFamilyCode, json } from './_lib/db.js';
 
 const MAX_AUTHOR = 60;
 const MAX_MESSAGE = 1000;
@@ -86,6 +86,28 @@ export async function POST(request: Request) {
       RETURNING id, chapter_id, author, message, width, height, created_at`) as MemoryRow[];
 
     return json({ memory: toMemory(row) }, { status: 201 });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+// DELETE /api/memories — { id, adminCode } : retire un souvenir (administrateur uniquement)
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json().catch(() => {
+      throw new HttpError(400, 'Requête invalide.');
+    });
+
+    assertAdminCode(body.adminCode);
+
+    const id = typeof body.id === 'string' || typeof body.id === 'number' ? String(body.id) : '';
+    if (!/^\d+$/.test(id)) throw new HttpError(400, 'Identifiant invalide.');
+
+    const sql = await db();
+    const deleted = await sql`DELETE FROM memories WHERE id = ${id} RETURNING id`;
+    if (deleted.length === 0) throw new HttpError(404, 'Ce souvenir a déjà été supprimé.');
+
+    return json({ deleted: id });
   } catch (err) {
     return handleError(err);
   }

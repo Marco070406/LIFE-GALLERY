@@ -1,6 +1,7 @@
 import { db, handleError, HttpError } from './_lib/db.js';
 
-// GET /api/photo?id=42 — renvoie l'image stockée. Une photo ne change jamais : cache long.
+// GET /api/photo?id=42 — renvoie l'image stockée. Une photo ne change jamais, mais elle peut
+// être supprimée : cache limité (1 h sur le CDN, 1 jour dans le navigateur).
 export async function GET(request: Request) {
   try {
     const id = new URL(request.url).searchParams.get('id');
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
     return new Response(Buffer.from(row.data, 'base64'), {
       headers: {
         'Content-Type': row.image_type,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=86400, s-maxage=3600',
       },
     });
   } catch (err) {
